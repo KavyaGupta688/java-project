@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS Medical_Docs (
     patient_id   INT NOT NULL,
     file_path    VARCHAR(500) NOT NULL,
     doc_type     VARCHAR(50)  NOT NULL DEFAULT 'PDF',
+    extracted_text LONGTEXT NULL COMMENT 'Patient history text parsed out of the PDF at upload time',
     upload_date  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES Patients(patient_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;

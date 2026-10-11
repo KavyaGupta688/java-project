@@ -6,6 +6,7 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -28,6 +29,13 @@ public final class DBConnectionManager {
 
             HikariConfig config = new HikariConfig();
             config.setJdbcUrl(PROPS.getProperty("db.url"));
+            // Explicitly register the MySQL driver so DriverManager can
+            // always find it, even when ServiceLoader discovery is blocked.
+            try {
+                DriverManager.registerDriver(new com.mysql.cj.jdbc.Driver());
+            } catch (SQLException driverEx) {
+                throw new IllegalStateException("Could not register MySQL driver", driverEx);
+            }
             config.setUsername(PROPS.getProperty("db.username"));
             config.setPassword(PROPS.getProperty("db.password"));
             config.setMaximumPoolSize(Integer.parseInt(PROPS.getProperty("db.pool.size", "10")));
