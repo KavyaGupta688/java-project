@@ -3,6 +3,7 @@ package com.clinic.controller;
 import com.clinic.dao.IMedicalDocDAO;
 import com.clinic.dao.impl.MedicalDocDAOImpl;
 import com.clinic.util.DBConnectionManager;
+import com.clinic.util.PdfTextExtractor;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
@@ -58,8 +59,15 @@ public class FileUploadServlet extends HttpServlet {
 
         String docType = ext.replace(".", "").isBlank() ? "FILE" : ext.replace(".", "").toUpperCase();
 
+        // Parse the uploaded PDF's contents right away ("uploading and parsing
+        // of patient history PDFs" from the project statement). Non-PDF or
+        // unreadable files are still stored; only the parsed text is absent.
+        String extractedText = "PDF".equalsIgnoreCase(docType)
+                ? PdfTextExtractor.extractText(destination.toFile())
+                : null;
+
         try {
-            docDAO.insertDoc(patientId, destination.toString(), docType);
+            docDAO.insertDoc(patientId, destination.toString(), docType, extractedText);
         } catch (SQLException e) {
             throw new ServletException("Database error saving document record", e);
         }
