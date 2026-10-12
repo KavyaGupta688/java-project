@@ -36,6 +36,9 @@ public class AppLifecycleListener implements ServletContextListener {
             uploadDir.mkdirs();
         }
 
+        // Initialize database tables and seed demo accounts if necessary
+        DBConnectionManager.initSchema();
+
         ThreadFactory daemonFactory = r -> {
             Thread t = new Thread(r, "clinic-background-worker");
             t.setDaemon(true);
