@@ -115,13 +115,17 @@ public class AppointmentDAOImpl implements IAppointmentDAO {
     public List<Appointment> findUpcomingNeedingReminder(int withinMinutes) throws SQLException {
         // Appointments scheduled for today or tomorrow, still pending/confirmed, no reminder sent yet.
         String sql = JOIN_SELECT + "WHERE a.reminder_sent = FALSE AND a.status IN ('PENDING','CONFIRMED') " +
-                "AND a.appt_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 1 DAY)";
+                "AND a.appt_date BETWEEN ? AND ?";
         List<Appointment> list = new ArrayList<>();
         try (Connection con = DBConnectionManager.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapRow(rs));
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            java.time.LocalDate today = java.time.LocalDate.now();
+            ps.setDate(1, java.sql.Date.valueOf(today));
+            ps.setDate(2, java.sql.Date.valueOf(today.plusDays(1)));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
         }
         return list;
@@ -139,13 +143,15 @@ public class AppointmentDAOImpl implements IAppointmentDAO {
 
     @Override
     public List<Appointment> findExpired() throws SQLException {
-        String sql = JOIN_SELECT + "WHERE a.appt_date < CURDATE() AND a.status IN ('PENDING','CONFIRMED')";
+        String sql = JOIN_SELECT + "WHERE a.appt_date < ? AND a.status IN ('PENDING','CONFIRMED')";
         List<Appointment> list = new ArrayList<>();
         try (Connection con = DBConnectionManager.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                list.add(mapRow(rs));
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setDate(1, java.sql.Date.valueOf(java.time.LocalDate.now()));
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(mapRow(rs));
+                }
             }
         }
         return list;
@@ -154,9 +160,10 @@ public class AppointmentDAOImpl implements IAppointmentDAO {
     @Override
     public int expireOldAppointments() throws SQLException {
         String sql = "UPDATE Appointments SET status = 'EXPIRED' " +
-                "WHERE appt_date < CURDATE() AND status IN ('PENDING','CONFIRMED')";
+                "WHERE appt_date < ? AND status IN ('PENDING','CONFIRMED')";
         try (Connection con = DBConnectionManager.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setDate(1, java.sql.Date.valueOf(java.time.LocalDate.now()));
             return ps.executeUpdate();
         }
     }

@@ -6,3 +6,4 @@ target/
 .vscode/
 uploads/*
 !uploads/.gitkeep
+.tools/
